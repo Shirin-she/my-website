@@ -63,6 +63,21 @@
     transform: scale(1.03);
 }
 
+.spinner-wrapper{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 20px 0;
+}
+
+.spinner-fullpage{
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
 .signup-text{
     margin-top: 20px;
     color: #555;

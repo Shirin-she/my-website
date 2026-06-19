@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { InfinitySpin } from "react-loader-spinner"
 import "./card.css"
 
 const API_BASE_URL = "https://sample-e-1.onrender.com"
@@ -41,7 +42,11 @@ function Card() {
     }, [])
 
     if (loading) {
-        return <p className="loading-text">Loading products...</p>
+        return (
+            <div className="card-loading-container">
+                <InfinitySpin width="200" color="#4fa94d" />
+            </div>
+        )
     }
 
     if (error) {
