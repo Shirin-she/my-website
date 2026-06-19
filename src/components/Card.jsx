@@ -11,6 +11,14 @@ function Card() {
 
     useEffect(() => {
         const fetchProducts = async () => {
+            // always load any locally stored products first
+            let localProducts = []
+            try {
+                localProducts = JSON.parse(localStorage.getItem('localProducts') || '[]')
+            } catch (err) {
+                localProducts = []
+            }
+
             try {
                 const response = await fetch(
                     `${API_BASE_URL}/product/getproducts`
@@ -19,9 +27,9 @@ function Card() {
                 const data = await response.json()
 
                 if (!response.ok) {
-                    throw new Error(
-                        data.message || "Failed to fetch products"
-                    )
+                    // server returned error, still show local products
+                    setProducts(localProducts)
+                    throw new Error(data.message || "Failed to fetch products")
                 }
 
                 const normalizedProducts = Array.isArray(data)
@@ -30,9 +38,12 @@ function Card() {
                     ? data.value
                     : []
 
-                setProducts(normalizedProducts)
+                // merge local items first so they appear at the top
+                setProducts([...localProducts, ...normalizedProducts])
             } catch (err) {
+                // on network/server error, show any local products instead of failing silently
                 setError(err.message || "Something went wrong")
+                if (localProducts.length > 0) setProducts(localProducts)
             } finally {
                 setLoading(false)
             }
@@ -49,7 +60,7 @@ function Card() {
         )
     }
 
-    if (error) {
+    if (error && products.length === 0) {
         return <p className="error-text">{error}</p>
     }
 
@@ -65,7 +76,7 @@ function Card() {
         <div className="products-grid">
             {products.map((product) => {
                 const imageUrl = product.image
-                    ? product.image.startsWith("http")
+                    ? product.image.startsWith("http") || product.image.startsWith("data:")
                         ? product.image
                         : `${API_BASE_URL}/${product.image}`
                     : "https://via.placeholder.com/300"
@@ -95,7 +106,7 @@ function Card() {
                                 "No description available."}
                         </p>
 
-                        <button type="button">Choose Plan</button>
+                        <button type="button">Add To Cart</button>
                     </article>
                 )
             })}

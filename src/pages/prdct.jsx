@@ -1,28 +1,114 @@
 import { useState } from "react"
 import "./prdct.css"
 
+const API_BASE_URL = "https://sample-e-1.onrender.com"
+
 function AddProduct() {
   const [name, setName] = useState("")
   const [price, setPrice] = useState("")
   const [description, setDescription] = useState("")
+  const [category, setCategory] = useState("")
   const [stock, setStock] = useState("")
   const [file, setFile] = useState(null)
   const [message, setMessage] = useState("")
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
 
-    if (!name || !price || !description || !stock || !file) {
+    if (!name || !price || !description || !stock || !file || !category) {
       setMessage("Please fill in all fields before adding the product.")
       return
     }
 
-    setMessage("Product added successfully!")
-    setName("")
-    setPrice("")
-    setDescription("")
-    setStock("")
-    setFile(null)
+    setMessage("Adding product...")
+
+    const formData = new FormData()
+    formData.append("name", name)
+    formData.append("price", price)
+    formData.append("category", category)
+    formData.append("description", description)
+    formData.append("stock", stock)
+    formData.append("image", file, file.name)
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/product/addproduct`, {
+        method: "POST",
+        body: formData,
+      })
+
+      if (!res.ok) {
+        const body = await res.text().catch(() => "")
+        console.warn("Add product API returned error:", res.status, body)
+        setMessage("Could not add product to server. Saved locally instead.")
+        saveLocally()
+        return
+      }
+
+      const data = await res.json().catch(() => ({}))
+      const created = data.product || data
+
+      try {
+        const existing = JSON.parse(localStorage.getItem("localProducts") || "[]")
+        existing.unshift(created)
+        localStorage.setItem("localProducts", JSON.stringify(existing))
+      } catch (err) {
+        console.warn("Could not save server product locally:", err)
+      }
+
+      setMessage("Product added to server successfully!")
+      setName("")
+      setPrice("")
+      setDescription("")
+      setCategory("")
+      setStock("")
+      setFile(null)
+      if (event.target && typeof event.target.reset === "function") event.target.reset()
+    } catch (err) {
+      console.error("API request failed, saving locally:", err)
+      setMessage("Server request failed. Product saved locally.")
+      saveLocally()
+    }
+  }
+
+  // helper to save the product locally (reads file as data URL)
+  function saveLocally() {
+    const reader = new FileReader()
+    reader.onload = () => {
+      const imageData = reader.result
+
+      const newProduct = {
+        _id: `local-${Date.now()}`,
+        name: name,
+        price: parseFloat(price) || 0,
+        description: description,
+        stock: parseInt(stock || "0", 10) || 0,
+        image: imageData,
+        category: category || "Local",
+      }
+
+      try {
+        const existing = JSON.parse(localStorage.getItem("localProducts") || "[]")
+        existing.unshift(newProduct)
+        localStorage.setItem("localProducts", JSON.stringify(existing))
+
+        setMessage("Product saved locally (offline fallback).")
+        setName("")
+        setPrice("")
+        setDescription("")
+        setCategory("")
+        setStock("")
+        setFile(null)
+      } catch (err) {
+        console.error(err)
+        setMessage("Failed to save product locally.")
+      }
+    }
+
+    reader.onerror = () => {
+      setMessage("Failed to read the image file for local save.")
+    }
+
+    reader.readAsDataURL(file)
   }
 
   return (
@@ -38,6 +124,16 @@ function AddProduct() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Enter product name"
+            />
+          </label>
+
+          <label>
+            Category
+            <input
+              type="text"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              placeholder="Enter product category"
             />
           </label>
 

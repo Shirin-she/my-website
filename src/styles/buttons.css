@@ -1,0 +1,11 @@
+.btn,
+button {
+  cursor: pointer;
+  transform-origin: center;
+  transition: box-shadow 0.2s ease, transform 0.18s ease;
+}
+
+button:focus {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(0, 212, 255, 0.12);
+}

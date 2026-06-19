@@ -1,5 +1,9 @@
 .navbar {
-    background: linear-gradient(180deg, rgb(119, 136, 115), rgb(161, 188, 152));
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background: rgba(119, 136, 115, 0.95);
+    backdrop-filter: blur(10px);
     color: white;
     padding: 15px 30px;
 
